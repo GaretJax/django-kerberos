@@ -1,3 +1,7 @@
+Proof of concept setup for Kerberos authentication in Django
+============================================================
+
+How to run the sample:
 
 1. Build the images::
 
