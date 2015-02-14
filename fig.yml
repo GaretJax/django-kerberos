@@ -1,0 +1,45 @@
+kdc:
+  build: kdc
+  command: krb5kdc -n
+  volumes:
+    - conf/krb5.conf:/etc/krb5.conf
+    - data/kdc:/var/kerberos/krb5kdc
+    - conf/kdc.conf:/var/kerberos/krb5kdc/kdc.conf
+    # IMPORTANT: only for development/testing, use a real entropy source on
+    # production systems!
+    - /dev/urandom:/dev/random
+
+kadmin:
+  build: kadmin
+  command: kadmind -nofork
+  volumes:
+    - conf/krb5.conf:/etc/krb5.conf
+    - data/kdc:/var/kerberos/krb5kdc
+    - conf/acl.conf:/var/kerberos/krb5kdc/kadm5.acl
+    # IMPORTANT: only for development/testing, use a real entropy source on
+    # production systems!
+    - /dev/urandom:/dev/random
+  links:
+    - kdc:djkerb_kdc
+
+server:
+  build: server
+  ports:
+    - "80:80"
+  command: python server.py
+  volumes:
+    - conf/krb5.conf:/etc/krb5.conf
+    - data/keytabs:/var/keytabs
+    - server:/usr/src/app
+  links:
+    - kdc:djkerb_kdc
+    - kadmin:djkerb_admin
+
+client:
+  build: client
+  command: python get.py
+  volumes:
+    - conf/krb5.conf:/etc/krb5.conf
+    - client:/usr/src/app
+  links:
+    - kdc:djkerb_kdc
